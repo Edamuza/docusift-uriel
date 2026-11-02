@@ -46,7 +46,7 @@ Rules:
 - If the image is not an invoice/receipt or is unreadable, set readable=false and all values null with confidence 0.`;
 
 export class ExtractionError extends Error {
-  constructor(message: string, public code: "rate_limit" | "credits" | "unreadable" | "ai_error") {
+  constructor(message: string, public code: "rate_limit" | "credits" | "unreadable" | "ai_error" | "timeout") {
     super(message);
   }
 }
@@ -74,6 +74,7 @@ export async function extractFromImage(imageDataUrl: string): Promise<{ data: Do
       model: provider.responses(MODEL),
       instructions: INSTRUCTIONS,
       maxRetries: 0,
+      abortSignal: AbortSignal.timeout(90_000),
       output: Output.object({ schema }),
       messages: [
         {
@@ -110,6 +111,10 @@ export async function extractFromImage(imageDataUrl: string): Promise<{ data: Do
   } catch (e) {
     if (e instanceof ExtractionError) throw e;
     const err = streamError ?? e;
+    const isTimeout = (x: unknown) =>
+      x instanceof Error && (x.name === "TimeoutError" || x.name === "AbortError" || isTimeout((x as { cause?: unknown }).cause));
+    if (isTimeout(e) || isTimeout(streamError))
+      throw new ExtractionError("The AI took too long to respond. Please retry.", "timeout");
     const status = APICallError.isInstance(err) ? err.statusCode : undefined;
     console.error("extraction failed", status, err);
     if (status === 429) throw new ExtractionError("The AI service is busy (rate limited). Please retry in a minute.", "rate_limit");

@@ -46,7 +46,11 @@ export const extractDocument = createServerFn({ method: "POST" })
     await db.from("documents").update({ status: "processing", error: null, updated_at: new Date().toISOString() }).eq("id", data.id);
     const started = Date.now();
     try {
+      if (!data.imageDataUrl || !data.imageDataUrl.includes(";base64,") || data.imageDataUrl.split(";base64,")[1]!.length < 100)
+        throw new ExtractionError("The uploaded image data is missing or empty.", "unreadable");
       const { data: doc, confidence } = await extractFromImage(data.imageDataUrl);
+      if ((!doc.line_items || doc.line_items.length === 0) && doc.total_amount == null)
+        throw new ExtractionError("No line items or total could be read from this image.", "unreadable");
       const rules = validate(doc);
       const { data: settings } = await db.from("app_settings").select("auto_approve").eq("id", 1).maybeSingle();
       const status = statusAfterExtraction(confidence, rules, settings?.auto_approve ?? false);
