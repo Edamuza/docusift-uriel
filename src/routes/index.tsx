@@ -82,7 +82,7 @@ function DocumentsPage() {
       await process(file.name, img);
     } catch (e) {
       console.warn(e);
-      toast.error("Could not read that file. Is it a valid image or PDF?");
+      toast.error(e instanceof Error && e.message.startsWith("Could not read") ? e.message : "Could not read that file. Is it a valid image or PDF?");
     } finally {
       setBusy(null);
     }
@@ -94,8 +94,8 @@ function DocumentsPage() {
       const img = await urlToJpeg(`/samples/${slug}.svg`);
       const id = await process(`${slug}.png`, img);
       navigate({ to: "/documents/$id", params: { id } });
-    } catch {
-      toast.error("Could not start the sample. Please try again.");
+    } catch (e) {
+      toast.error(e instanceof Error && e.message.startsWith("Could not read") ? e.message : "Could not start the sample. Please try again.");
     } finally {
       setBusy(null);
     }
