@@ -10,33 +10,102 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as AccuracyRouteImport } from './routes/accuracy'
+import { Route as ExportRouteImport } from './routes/export'
+import { Route as DocumentsIdRouteImport } from './routes/documents.$id'
+import { Route as ApiPublicImagesPathRouteImport } from './routes/api/public/images.$path'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccuracyRoute = AccuracyRouteImport.update({
+  id: '/accuracy',
+  path: '/accuracy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExportRoute = ExportRouteImport.update({
+  id: '/export',
+  path: '/export',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocumentsIdRoute = DocumentsIdRouteImport.update({
+  id: '/documents/$id',
+  path: '/documents/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicImagesPathRoute = ApiPublicImagesPathRouteImport.update({
+  id: '/api/public/images/$path',
+  path: '/api/public/images/$path',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/accuracy': typeof AccuracyRoute
+  '/export': typeof ExportRoute
+  '/documents/$id': typeof DocumentsIdRoute
+  '/api/public/images/$path': typeof ApiPublicImagesPathRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/accuracy': typeof AccuracyRoute
+  '/export': typeof ExportRoute
+  '/documents/$id': typeof DocumentsIdRoute
+  '/api/public/images/$path': typeof ApiPublicImagesPathRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/accuracy': typeof AccuracyRoute
+  '/export': typeof ExportRoute
+  '/documents/$id': typeof DocumentsIdRoute
+  '/api/public/images/$path': typeof ApiPublicImagesPathRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/accuracy'
+    | '/export'
+    | '/documents/$id'
+    | '/api/public/images/$path'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/about'
+    | '/accuracy'
+    | '/export'
+    | '/documents/$id'
+    | '/api/public/images/$path'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/accuracy'
+    | '/export'
+    | '/documents/$id'
+    | '/api/public/images/$path'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
+  AccuracyRoute: typeof AccuracyRoute
+  ExportRoute: typeof ExportRoute
+  DocumentsIdRoute: typeof DocumentsIdRoute
+  ApiPublicImagesPathRoute: typeof ApiPublicImagesPathRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +117,51 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/accuracy': {
+      id: '/accuracy'
+      path: '/accuracy'
+      fullPath: '/accuracy'
+      preLoaderRoute: typeof AccuracyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/export': {
+      id: '/export'
+      path: '/export'
+      fullPath: '/export'
+      preLoaderRoute: typeof ExportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/documents/$id': {
+      id: '/documents/$id'
+      path: '/documents/$id'
+      fullPath: '/documents/$id'
+      preLoaderRoute: typeof DocumentsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/images/$path': {
+      id: '/api/public/images/$path'
+      path: '/api/public/images/$path'
+      fullPath: '/api/public/images/$path'
+      preLoaderRoute: typeof ApiPublicImagesPathRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
+  AccuracyRoute: AccuracyRoute,
+  ExportRoute: ExportRoute,
+  DocumentsIdRoute: DocumentsIdRoute,
+  ApiPublicImagesPathRoute: ApiPublicImagesPathRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

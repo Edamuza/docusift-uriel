@@ -14,13 +14,78 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      app_settings: {
+        Row: {
+          auto_approve: boolean
+          id: number
+        }
+        Insert: {
+          auto_approve?: boolean
+          id?: number
+        }
+        Update: {
+          auto_approve?: boolean
+          id?: number
+        }
+        Relationships: []
+      }
+      documents: {
+        Row: {
+          approved_at: string | null
+          changed_fields: string[]
+          confidence: Json
+          created_at: string
+          data: Json | null
+          error: string | null
+          extracted: Json | null
+          file_name: string
+          id: string
+          image_url: string | null
+          is_seed: boolean
+          processing_ms: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          changed_fields?: string[]
+          confidence?: Json
+          created_at?: string
+          data?: Json | null
+          error?: string | null
+          extracted?: Json | null
+          file_name: string
+          id?: string
+          image_url?: string | null
+          is_seed?: boolean
+          processing_ms?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          changed_fields?: string[]
+          confidence?: Json
+          created_at?: string
+          data?: Json | null
+          error?: string | null
+          extracted?: Json | null
+          file_name?: string
+          id?: string
+          image_url?: string | null
+          is_seed?: boolean
+          processing_ms?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      reset_demo: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
