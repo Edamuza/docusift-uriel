@@ -1,86 +1,140 @@
-# Docusift Uriel
+# DocuSift
 
-Build this complete app now, all screens and the backend, following the spec below. Use Lovable Cloud and Lovable AI; do not ask me for API keys.
+Turns Philippine invoices and official receipts into validated, structured data, with a human review step for anything uncertain.
 
-# Project 4 — DocuSift: invoice and receipt extraction with human review
+**Live demo:** https://docusift-uriel.lovable.app
 
-Build "DocuSift", a document-automation tool that turns invoices and official receipts (Philippine format) into structured, validated data. Low-confidence or rule-breaking fields go to a human review screen; approved data exports to CSV. An accuracy report shows how often the AI was right, field by field.
+Demo app. All sample data is fictional.
 
-## Screens
-1. **Documents** (home): table of documents (thumbnail, file name, vendor, total, date, status: Processing, Needs review, Approved, Failed) with filters. Upload area (drag and drop or click; images PNG/JPG and PDF up to 10 MB). A prominent "Try a sample document" button with 3 bundled fictional samples (see below) so a visitor can test without their own files.
-2. **Review** (/documents/:id): the document image on the left (zoomable), extracted fields on the right. Each field shows its value, a confidence badge (high ≥ 0.9 green, medium 0.75–0.9 amber, low < 0.75 red) and is editable. Line items in an editable table (description, qty, unit price, amount). A "Validation" panel lists rule results (pass/fail with explanation). Buttons: Approve, Save draft, Re-extract, Delete. Approving stores the final values and records which fields the reviewer changed.
-3. **Export**: choose date range / status = Approved, preview the rows, download CSV (one row per document; a second CSV option with one row per line item).
-4. **Accuracy**: for approved documents, field-level accuracy = fields the reviewer did not change ÷ total fields, shown per field (bar chart) and overall; also share of documents auto-approvable (all fields high confidence and all rules pass); average processing time.
-5. **About this project** (common requirements).
+![Documents screen with four fictional sample invoices and their statuses](docs/screenshots/documents-home.png)
 
-## Extraction (edge function, Lovable AI vision model, structured output)
-Schema: document_type (Sales Invoice / Official Receipt / Delivery Receipt / Other), vendor_name, vendor_tin, vendor_address, buyer_name, invoice_number, invoice_date (ISO), currency (default PHP), vatable_sales, vat_amount, vat_exempt_sales, total_amount, line_items[] {description, quantity, unit_price, amount}; every top-level field with a confidence 0–1. For PDFs, render the first page to an image in the browser (pdf.js) before sending.
+## The problem
 
-## Validation rules (computed in code, not by the model)
-- Sum of line item amounts equals vatable_sales + vat_exempt_sales (±1.00).
-- vatable_sales + vat_amount + vat_exempt_sales equals total_amount (±1.00).
-- vat_amount ≈ 12% of vatable_sales (±1.00).
-- vendor_tin matches ###-###-###-### (last group may be 3–5 digits).
-- invoice_date is a valid date not in the future.
-- Any field with confidence < 0.75 or any failed rule → status "Needs review"; otherwise "Approved" automatically only if the user enables "Auto-approve clean documents" (setting, off by default) — else "Needs review".
+Bookkeepers, accounting staff and small finance teams in the Philippines still key invoices and official receipts into spreadsheets by hand. It is slow, and typing errors in TINs, VAT amounts or totals surface later as mismatches during reconciliation or tax filing. Fully automatic extraction is not enough either, because nobody can trust a number without knowing how sure the system was and whether the math adds up.
 
-## Bundled samples (fictional, generate as clean, realistic invoice images — e.g., SVG files rendered to PNG in the browser before extraction)
-1. "Sari-Sari Supplies Trading (fictional)" Sales Invoice: TIN 123-456-789-00000, 4 line items (bond paper reams, ballpens, folders, printer ink), VAT 12%, all totals consistent.
-2. "Kusina ni Lola Catering (fictional)" Official Receipt: VAT-exempt sales, 2 line items, totals consistent.
-3. "Mabilis Hardware (fictional)" Sales Invoice with a deliberate arithmetic error: the total printed is PHP 100.00 higher than vatable + VAT, so the "totals" rule must fail and the document lands in Needs review.
+## What it does
 
-## Acceptance checks
-- D1 "Try a sample" for sample 1 produces extracted fields matching the image (vendor, TIN, invoice number, date, totals, 4 line items) and all rules pass.
-- D2 Sample 3 fails the totals rule and shows status Needs review with a clear explanation.
-- D3 Editing a field on Review and approving records the change; the Accuracy page reflects it (that field's accuracy drops below 100%).
-- D4 Export downloads a CSV with the approved documents' values.
-- D5 Uploading a PNG works end to end (QA may use a screenshot of a sample).
-- D6 Low-confidence fields show the red/amber badges; errors (e.g., unreadable image) show a Failed status with a retry, not a stuck spinner.
-- D7 Reset demo data, About page, mobile layout, no console errors.
+- **Documents** (home): upload a PNG, JPG or PDF (up to 10 MB) by drag and drop, or click "Try a sample document" to run one of three bundled fictional invoices. A table lists every document with its vendor, total, date and status (Processing, Needs review, Approved, Failed), with filters.
+- **Extraction**: a vision model reads a fixed schema (document type, vendor, TIN, address, buyer, invoice number, date, currency, VATable / VAT / VAT-exempt amounts, total, line items). Every field comes back with a confidence score.
+- **Validation in code**: five rules check the arithmetic, VAT rate, TIN format and date. The model never decides pass or fail.
+- **Review** (`/documents/:id`): zoomable document image beside editable fields with green / amber / red confidence badges, an editable line-item table and a Validation panel. Buttons: Approve, Save draft, Re-extract, Delete. Approving records which fields the reviewer changed.
+- **Export**: filter approved documents by date, preview rows, and download a per-document CSV or a per-line-item CSV.
+- **Accuracy**: field-level accuracy (fields not changed by the reviewer ÷ total fields), per field and overall, plus the share of documents that were auto-approvable and the average processing time.
+- **Reset demo data** restores the four seed documents. An "Auto-approve clean documents" setting is off by default.
 
-# Common requirements for all five portfolio apps (append to every Lovable spec)
+![Review screen for the Mabilis Hardware sample, showing the failed totals rule](docs/screenshots/review-needs-review.png)
 
-These apps are portfolio pieces for Uriel Papa, who is applying for AI Solutions Engineer / Forward-Deployed Engineer roles. A hiring manager will open the published link and click around with no login and no setup. Everything must work on first visit.
+## How it works
 
-## Stack and backend
-- Use Lovable Cloud for the database, file storage and edge functions.
-- Use Lovable AI (Lovable's built-in AI gateway) for every model call. Do not ask for, or depend on, any external API key (no OpenAI/Anthropic/OpenRouter keys).
-- All model calls happen in edge functions, never in the browser.
-- No login. This is a public demo. Keep Row Level Security enabled on every table, with policies that let the demo work (anonymous read of demo data; writes go through edge functions or narrowly scoped anon policies). The project must pass Lovable's security scan so it can be published.
-- Handle AI errors visibly: show a friendly error toast/message on rate limits (429), credits (402) or timeouts, never a blank screen or a spinner that never ends.
+The pattern is **extract, then verify in code, then route to a human**. The model only reads the document. Deterministic rules check what it read. Anything the rules reject, or the model was unsure about, waits for a person.
 
-## Demo data
-- Seed realistic sample data on first load (or via a migration) so every screen has content immediately. All sample businesses, people and documents are fictional and labeled as such.
-- Add a "Reset demo data" action (with confirm) that restores the seed state.
-- Show a slim banner: "Demo app — all sample data is fictional."
+1. The browser turns the file into an image. PDFs are rendered to an image (first page) with pdf.js in `src/lib/render.ts`. Bundled samples are SVGs rendered to PNG.
+2. `createDocument` stores the image in a private storage bucket and inserts a `documents` row with status `processing`.
+3. `extractDocument` calls a vision model through the Lovable AI gateway (`src/lib/extract.server.ts`) using structured output against a Zod schema. The call aborts after 90 seconds.
+4. `validate()` and `statusAfterExtraction()` in `src/lib/doc-schema.ts` run the rules and set the status. Any field below 0.75 confidence or any failed rule means Needs review. Otherwise the document is approved only if auto-approve is on.
+5. On the Review screen, `saveDocument` stores the final values and uses `changedFields()` to record what the reviewer edited. The Accuracy page computes its numbers from those records.
 
-## Portfolio framing
-- Add an "About this project" page reachable from the nav with four short sections: The problem (who has it, what it costs), The approach (how the app solves it, the AI pattern used), Architecture (frontend → edge functions → Lovable AI → database; list tables and functions), What I'd do next in a real deployment. Author: Uriel Papa, with links to github.com/Edamuza and linkedin.com/in/uriel-papa-vitese01.
-- Clean, professional, responsive UI (works at 375px phone width and on desktop). Consistent nav. Empty states, loading states and error states for every async action.
+Validation rules (tolerance ±1.00):
 
-## Quality bar
-- No console errors on load. No broken routes. Every button does something real.
-- Numbers shown in tables/KPIs must be computed from stored data, not hard-coded.
+- Line item amounts sum to VATable + VAT-exempt sales.
+- VATable + VAT + VAT-exempt equals the total.
+- VAT is 12% of VATable sales.
+- TIN matches `###-###-###-###` (last group 3 to 5 digits).
+- Invoice date is valid and not in the future.
 
-This project was built with [Lovable](https://lovable.dev).
+Confidence badges: green at 0.9 and above, amber from 0.75 to below 0.9, red below 0.75.
 
-**Live app**: https://docusift-uriel.lovable.app
+```mermaid
+flowchart LR
+  B["Browser<br/>React + TanStack Router<br/>pdf.js render (src/lib/render.ts)"]
+  subgraph S["Server functions (src/lib/docs.functions.ts)"]
+    C[createDocument]
+    E[extractDocument]
+    SV[saveDocument]
+    O[deleteDocument / setAutoApprove / resetDemo]
+  end
+  X["extract.server.ts<br/>structured output"]
+  R["doc-schema.ts<br/>validate / statusAfterExtraction / changedFields"]
+  G["Lovable AI gateway<br/>vision model"]
+  DB[("Database<br/>documents, app_settings")]
+  ST[("Private storage<br/>uploads bucket")]
+  IMG["/api/public/images/$path"]
 
-## Build with Lovable
+  B --> C --> ST
+  C --> DB
+  B --> E --> X --> G
+  E --> R --> DB
+  B --> SV --> R
+  B --> O --> DB
+  B -- "reads (RLS: read-only)" --> DB
+  B -- "document images" --> IMG --> ST
+```
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/9131025b-9e9c-497e-953f-76c72a706ed4).
+All writes go through server functions. The browser reads tables directly, and Row Level Security allows reads only. Images live in a private bucket and are served through the `/api/public/images/$path` route.
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+## Data model
 
-## Development
+| Table | What it holds |
+| --- | --- |
+| `documents` | One row per uploaded document: file name, image URL, status, the raw model output (`extracted`), the current reviewed values (`data`), per-field `confidence`, `changed_fields` from review, `processing_ms`, `error` message, `is_seed` flag, and created / updated / approved timestamps. |
+| `app_settings` | A single row with the `auto_approve` setting. |
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+A `reset_demo()` SQL function restores the four fictional seed documents. Images are stored in the private `uploads` storage bucket.
+
+## Quality and testing
+
+Browser QA of the published app:
+
+- All three fictional sample invoices were run through the real model. Every extracted field matched the images.
+- Sample 3 (Mabilis Hardware) has a deliberate PHP 100.00 total error. The totals rule caught it ("PHP 100.00 higher than it should be") and the document went to Needs review.
+- Editing one vendor name on Review and approving dropped "Vendor name" accuracy on the Accuracy page from 100% to 75%.
+- Export produced both the per-document and the per-line-item CSV.
+- An unreadable image ends as Failed with a clear message and a Retry button, with no endless spinner.
+- Found in QA and fixed: uploads could stall in a background browser tab. Image loading now has a 20-second timeout.
+
+Automated tests (Vitest, `npm test`):
+
+- `src/test/doc-rules.test.ts`: validation rules (samples 1 and 2 pass every rule, sample 3 fails only the totals rule, ±1.00 tolerance, 3 to 5 digit TIN last group, future dates rejected), status routing (low confidence, failed rule, auto-approve off and on), and accuracy (an edited field drops below 100%).
+- `src/test/app-routing.test.tsx`: the home route `/` resolves to a page instead of "not found".
+
+![Accuracy screen with overall and per-field accuracy](docs/screenshots/accuracy-report.png)
+
+## Tech stack
+
+- **Frontend:** React 19, TanStack Router, TanStack Query, Tailwind CSS v4, Radix UI primitives, Recharts, pdfjs-dist.
+- **Server:** TanStack Start server functions (`createServerFn`) and one server route, running on an edge (Cloudflare Workers) runtime. Zod for input validation.
+- **Database and storage:** Lovable Cloud (Postgres with Row Level Security, private file storage) via `@supabase/supabase-js`.
+- **AI:** Vercel AI SDK (`ai`, `@ai-sdk/openai`) calling a vision model through the Lovable AI gateway, with structured output.
+- **Build and tests:** Vite 7, Vitest.
+- **Hosting:** Lovable.
+
+## Run locally
+
+Prerequisites: Node 22.
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
 npm i
 npm run dev
 ```
+
+Environment variables (names only):
+
+- `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_PROJECT_ID`
+- `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_PROJECT_ID`
+- Server-side: `SUPABASE_SERVICE_ROLE_KEY` (used by server functions for writes) and `LOVABLE_API_KEY` (used for AI calls)
+
+Note: AI calls use the Lovable AI gateway, which only works with Lovable Cloud. To run elsewhere, replace the calls in `src/lib/extract.server.ts` with your own model provider key.
+
+## Limitations and next steps
+
+- Public demo with no login. Anyone can upload, edit, approve or reset data. A real deployment needs authentication, per-organization data, roles (preparer vs. approver) and an audit log.
+- Only the first page of a PDF is extracted. Multi-page invoices would need page-by-page extraction and merging of line items.
+- Accuracy is measured from reviewer edits, which assumes reviewers catch every error. A real deployment would add a labeled test set and track accuracy over time and per model version.
+- Validation covers arithmetic and format only. Next steps: check TINs and vendors against a master list, detect duplicate invoice numbers, and push approved data to an accounting system instead of CSV.
+- No background queue. Extraction runs inside a single request, so large batches would need a job queue with retries.
+
+## Author
+
+Uriel Papa. [GitHub](https://github.com/Edamuza) · [LinkedIn](https://www.linkedin.com/in/uriel-papa-vitese01/)
+
+Built with Lovable (AI app builder) from a written spec, then tested against acceptance checks and fixed.
