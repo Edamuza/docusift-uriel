@@ -33,7 +33,7 @@ export const Route = createFileRoute("/")({
   component: DocumentsPage,
 });
 
-const STALE_MS = 3 * 60 * 1000;
+const STALE_MS = 2 * 60 * 1000;
 
 function DocumentsPage() {
   const qc = useQueryClient();
@@ -256,7 +256,7 @@ function Thumb({ d }: { d: DocRow }) {
 }
 
 function stale(d: DocRow) {
-  return d.status === "processing" && Date.now() - new Date(d.created_at).getTime() > STALE_MS;
+  return d.status === "processing" && Date.now() - new Date(d.updated_at).getTime() > STALE_MS;
 }
 
 function DocTable({ docs }: { docs: DocRow[] }) {
@@ -299,13 +299,16 @@ function DocTable({ docs }: { docs: DocRow[] }) {
       <ul className="divide-y md:hidden">
         {docs.map((d) => (
           <li key={d.id}>
-            <Link to="/documents/$id" params={{ id: d.id }} className="flex items-center gap-3 p-3">
+            <Link to="/documents/$id" params={{ id: d.id }} className="flex items-center gap-3 p-3" aria-label={d.file_name}>
               <Thumb d={d} />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{d.data?.vendor_name ?? d.file_name}</p>
                 <p className="tabular text-xs text-muted-foreground">{d.data?.invoice_date ?? "—"} · PHP {peso(d.data?.total_amount)}</p>
               </div>
-              <StatusBadge status={d.status} />
+              <div className="flex flex-col items-end gap-1">
+                <StatusBadge status={d.status} />
+                {(d.status === "failed" || stale(d)) && <span className="text-xs font-medium text-primary underline">Retry</span>}
+              </div>
             </Link>
           </li>
         ))}

@@ -69,7 +69,8 @@ function Review({ row }: { row: DocRow}) {
   const rules = useMemo(() => validate(form), [form]);
   const edited = useMemo(() => (row.extracted ? changedFields(row.extracted, form) : []), [row.extracted, form]);
   const hasData = !!row.extracted;
-  const processing = row.status === "processing" || action === "extract";
+  const stale = row.status === "processing" && Date.now() - new Date(row.updated_at).getTime() > 2 * 60 * 1000;
+  const processing = (row.status === "processing" && !stale) || action === "extract";
 
   const set = <K extends keyof DocData>(k: K, v: DocData[K]) => setForm((f) => ({ ...f, [k]: v }));
   const setItem = (i: number, patch: Partial<LineItem>) =>
@@ -136,7 +137,7 @@ function Review({ row }: { row: DocRow}) {
           <div className="min-w-0">
             <h1 className="truncate text-2xl font-semibold">{form.vendor_name || row.file_name}</h1>
             <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-              <StatusBadge status={processing ? "processing" : row.status} />
+              <StatusBadge status={processing ? "processing" : stale ? "failed" : row.status} />
               <span className="truncate">{row.file_name}</span>
               {row.processing_ms != null && <span className="tabular">· {(row.processing_ms / 1000).toFixed(1)}s</span>}
             </div>
@@ -201,13 +202,13 @@ function Review({ row }: { row: DocRow}) {
               </div>
             </Panel>
           )}
-          {row.status === "failed" && !processing && (
+          {(row.status === "failed" || stale) && !processing && (
             <Panel className="border-danger/40 bg-danger-soft p-4 text-sm">
               <div className="flex items-start gap-3">
                 <XCircle className="mt-0.5 size-5 text-danger" />
                 <div className="flex-1">
-                  <p className="font-medium text-danger">Extraction failed</p>
-                  <p className="text-muted-foreground">{row.error ?? "Unknown error."}</p>
+                  <p className="font-medium text-danger">{stale ? "Extraction did not finish" : "Extraction failed"}</p>
+                  <p className="text-muted-foreground">{stale ? "The extraction was interrupted (for example, the tab was closed). Please retry." : (row.error ?? "Unknown error.")}</p>
                 </div>
                 <Button size="sm" onClick={doExtract}><RefreshCw /> Retry</Button>
               </div>

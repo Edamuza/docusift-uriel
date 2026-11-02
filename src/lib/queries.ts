@@ -15,6 +15,7 @@ export type DocRow = {
   error: string | null;
   is_seed: boolean;
   created_at: string;
+  updated_at: string;
   approved_at: string | null;
 };
 
