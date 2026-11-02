@@ -28,10 +28,13 @@ export const documentsQuery = queryOptions({
   },
 });
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export const documentQuery = (id: string) =>
   queryOptions({
     queryKey: ["documents", id],
     queryFn: async () => {
+      if (!UUID_RE.test(id)) return null;
       const { data, error } = await supabase.from("documents").select("*").eq("id", id).maybeSingle();
       if (error) throw new Error(error.message);
       return (data ?? null) as unknown as DocRow | null;

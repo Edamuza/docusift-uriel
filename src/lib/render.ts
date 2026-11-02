@@ -17,11 +17,33 @@ function drawScaled(src: CanvasImageSource, w: number, h: number) {
   return canvasToDataUrl(c);
 }
 
-export async function urlToJpeg(url: string): Promise<string> {
-  const img = new Image();
-  img.crossOrigin = "anonymous";
-  img.src = url;
-  await img.decode();
+const RENDER_TIMEOUT_MS = 20_000;
+const RENDER_ERROR = "Could not read that image. Please try another file.";
+
+function withTimeout<T>(p: Promise<T>): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error(RENDER_ERROR)), RENDER_TIMEOUT_MS);
+    p.then((v) => { clearTimeout(t); resolve(v); }, (e) => { clearTimeout(t); reject(e); });
+  });
+}
+
+// onload/onerror (not img.decode()) — decode() never resolves for raster images in hidden tabs in Chromium.
+function loadImage(url: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error(RENDER_ERROR));
+    img.src = url;
+  });
+}
+
+export function urlToJpeg(url: string): Promise<string> {
+  return withTimeout(urlToJpegInner(url));
+}
+
+async function urlToJpegInner(url: string): Promise<string> {
+  const img = await loadImage(url);
   // SVGs may report 0 natural size in some browsers; fall back to letter size.
   const w = img.naturalWidth || 850;
   const h = img.naturalHeight || 1100;
@@ -61,11 +83,15 @@ async function pdfToJpeg(file: File): Promise<string> {
 export const ACCEPTED = ["image/png", "image/jpeg", "application/pdf"];
 export const MAX_BYTES = 10 * 1024 * 1024;
 
-export async function fileToJpeg(file: File): Promise<string> {
+export function fileToJpeg(file: File): Promise<string> {
+  return withTimeout(fileToJpegInner(file));
+}
+
+async function fileToJpegInner(file: File): Promise<string> {
   if (file.type === "application/pdf") return pdfToJpeg(file);
   const url = URL.createObjectURL(file);
   try {
-    return await urlToJpeg(url);
+    return await urlToJpegInner(url);
   } finally {
     URL.revokeObjectURL(url);
   }

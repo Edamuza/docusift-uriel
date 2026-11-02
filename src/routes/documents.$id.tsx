@@ -107,8 +107,8 @@ function Review({ row }: { row: DocRow}) {
     try {
       const img = await urlToJpeg(row.image_url);
       await runExtraction(row.id, img);
-    } catch {
-      toast.error("Could not load the document image.");
+    } catch (e) {
+      toast.error(e instanceof Error && e.message.startsWith("Could not read") ? e.message : "Could not load the document image.");
     } finally {
       setAction(null);
     }
