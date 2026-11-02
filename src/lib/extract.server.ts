@@ -111,7 +111,7 @@ export async function extractFromImage(imageDataUrl: string): Promise<{ data: Do
   } catch (e) {
     if (e instanceof ExtractionError) throw e;
     const err = streamError ?? e;
-    const isTimeout = (x: unknown) =>
+    const isTimeout = (x: unknown): boolean =>
       x instanceof Error && (x.name === "TimeoutError" || x.name === "AbortError" || isTimeout((x as { cause?: unknown }).cause));
     if (isTimeout(e) || isTimeout(streamError))
       throw new ExtractionError("The AI took too long to respond. Please retry.", "timeout");
