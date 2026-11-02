@@ -187,10 +187,10 @@ function sameItems(a: LineItem[], b: LineItem[]) {
   if (a.length !== b.length) return false;
   return a.every(
     (x, i) =>
-      norm(x.description) === norm(b[i].description) &&
-      norm(x.quantity) === norm(b[i].quantity) &&
-      norm(x.unit_price) === norm(b[i].unit_price) &&
-      norm(x.amount) === norm(b[i].amount),
+      norm(x.description) === norm(b[i]?.description) &&
+      norm(x.quantity) === norm(b[i]?.quantity) &&
+      norm(x.unit_price) === norm(b[i]?.unit_price) &&
+      norm(x.amount) === norm(b[i]?.amount),
   );
 }
 

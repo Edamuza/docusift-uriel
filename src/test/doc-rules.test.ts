@@ -4,7 +4,7 @@ import { SAMPLES } from "@/lib/samples";
 
 const today = new Date("2026-11-02T00:00:00Z");
 const conf = (v: number) => Object.fromEntries(ACCURACY_FIELDS.map((f) => [f, v]));
-const [s1, s2, s3] = SAMPLES;
+const [s1, s2, s3] = SAMPLES as [typeof SAMPLES[0] & {}, typeof SAMPLES[0] & {}, typeof SAMPLES[0] & {}];
 
 describe("validation rules", () => {
   it("sample 1 passes every rule", () => expect(validate(s1.data, today).every((r) => r.pass)).toBe(true));
@@ -12,7 +12,7 @@ describe("validation rules", () => {
   it("sample 3 fails only the totals rule (PHP 100 too high)", () => {
     const failed = validate(s3.data, today).filter((r) => !r.pass);
     expect(failed.map((r) => r.id)).toEqual(["totals"]);
-    expect(failed[0].detail).toContain("100.00 higher");
+    expect(failed[0]!.detail).toContain("100.00 higher");
   });
   it("tolerates ±1.00", () => {
     expect(validate({ ...s1.data, total_amount: 5063.4 }, today).find((r) => r.id === "totals")!.pass).toBe(true);

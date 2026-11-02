@@ -68,8 +68,14 @@ function DocumentsPage() {
   }, [docs.data]);
 
   async function handleFile(file: File) {
-    if (!ACCEPTED.includes(file.type)) return toast.error("Please upload a PNG, JPG or PDF file.");
-    if (file.size > MAX_BYTES) return toast.error("File is larger than 10 MB.");
+    if (!ACCEPTED.includes(file.type)) {
+      toast.error("Please upload a PNG, JPG or PDF file.");
+      return;
+    }
+    if (file.size > MAX_BYTES) {
+      toast.error("File is larger than 10 MB.");
+      return;
+    }
     setBusy(file.name);
     try {
       const img = await fileToJpeg(file);
@@ -209,7 +215,7 @@ function DocumentsPage() {
           <Select value={status} onValueChange={(v) => setStatus(v as typeof status)}>
             <SelectTrigger className="bg-paper sm:w-48"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All statuses ({counts.all})</SelectItem>
+              <SelectItem value="all">All statuses ({counts['all']})</SelectItem>
               {(Object.keys(STATUS_LABELS) as DocStatus[]).map((s) => (
                 <SelectItem key={s} value={s}>{STATUS_LABELS[s]} ({counts[s] ?? 0})</SelectItem>
               ))}

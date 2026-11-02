@@ -98,7 +98,10 @@ function Review({ row }: { row: DocRow}) {
   }
 
   async function doExtract() {
-    if (!row.image_url) return toast.error("No image stored for this document.");
+    if (!row.image_url) {
+      toast.error("No image stored for this document.");
+      return;
+    }
     setAction("extract");
     try {
       const img = await urlToJpeg(row.image_url);

@@ -94,7 +94,7 @@ const money = (v: number) => v.toLocaleString("en-US", { minimumFractionDigits: 
 function longDate(iso: string) {
   const [y, m, d] = iso.split("-").map(Number);
   const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-  return `${months[m - 1]} ${d}, ${y}`;
+  return `${months[(m ?? 1) - 1]} ${d}, ${y}`;
 }
 
 export function sampleSvg(s: Sample): string {

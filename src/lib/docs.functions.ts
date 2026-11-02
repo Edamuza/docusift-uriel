@@ -13,8 +13,8 @@ async function admin() {
 function decodeDataUrl(dataUrl: string) {
   const m = /^data:(image\/(png|jpeg|webp));base64,(.+)$/.exec(dataUrl);
   if (!m) throw new Error("Unsupported image format.");
-  const bin = Uint8Array.from(atob(m[3]), (c) => c.charCodeAt(0));
-  return { type: m[1], ext: m[2] === "jpeg" ? "jpg" : m[2], bytes: bin };
+  const bin = Uint8Array.from(atob(m[3] ?? ""), (c) => c.charCodeAt(0));
+  return { type: m[1] ?? "image/jpeg", ext: m[2] === "jpeg" ? "jpg" : (m[2] ?? "jpg"), bytes: bin };
 }
 
 const imageInput = z.string().min(20).max(MAX_DATA_URL).startsWith("data:image/");
