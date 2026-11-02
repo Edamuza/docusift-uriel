@@ -12,7 +12,7 @@ import {
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { ConfidenceBadge, ErrorState, LoadingState, Panel, StatusBadge } from "@/components/docu";
-import { documentQuery } from "@/lib/queries";
+import { documentQuery, type DocRow } from "@/lib/queries";
 import {
   changedFields, DOC_TYPES, emptyDoc, FIELD_LABELS, MONEY_FIELDS, peso, validate,
   type DocData, type LineItem, type TopField,
@@ -54,7 +54,7 @@ function ReviewPage() {
   return <Review key={`${doc.data.id}-${doc.data.status}-${doc.data.processing_ms}`} row={doc.data} />;
 }
 
-function Review({ row }: { row: NonNullable<ReturnType<typeof useQuery<Awaited<ReturnType<NonNullable<ReturnType<typeof documentQuery>["queryFn"]>>>>>["data"]> }) {
+function Review({ row }: { row: DocRow}) {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const save = useServerFn(saveDocument);
